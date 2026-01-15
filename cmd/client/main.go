@@ -1,17 +1,13 @@
 package main
 
 import (
-	//"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 
-	//"os"
-	//"os/signal"
-
-	//"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
-
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -28,10 +24,13 @@ func main() {
 	}
 	defer conn.Close()
 
-	strUser, err := ClientWelcome()
+	strUser, err := gamelogic.ClientWelcome()
+	if err != nil {
+		log.Fatalf("No valid user provided: %v", err)
+	}
 
 	queueName := fmt.Sprintf("%s.%s", routing.PauseKey, strUser)
-	myChannel, myQueue, err := DeclareAndBind(conn, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.sqtTransient)
+	_, _, err = pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.SqtTransient)
 	if err != nil {
 		log.Fatalf("Unable to declare and bind: %v", err)
 	}
@@ -40,6 +39,6 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 	//fmt.Println("Waiting for input...")
-	s := <-signalChan
+	_ = <-signalChan
 
 }

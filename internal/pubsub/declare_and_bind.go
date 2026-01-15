@@ -1,10 +1,8 @@
 package pubsub
 
 import (
-	//"context"
-	//"encoding/json"
 
-	"log"
+	//"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -12,16 +10,18 @@ import (
 type SimpleQueueType int
 
 const (
-	sqtDurable SimpleQueueType = iota
-	sqtTransient
+	SqtDurable SimpleQueueType = iota
+	SqtTransient
 )
 
 func (sqt SimpleQueueType) String() string {
 	switch sqt {
-	case sqtDurable:
+	case SqtDurable:
 		return "Durable"
-	case sqtTransient:
+	case SqtTransient:
 		return "Transient"
+	default:
+		return "Unknown"
 	}
 }
 
@@ -36,22 +36,22 @@ func DeclareAndBind(
 	// Create a new channel
 	newChannel, err := conn.Channel()
 	if err != nil {
-		log.Fatal("Unable to create new channel")
+		return nil, amqp.Queue{}, err
 	}
 
 	// Declare a new queue
-	boolDurable := (queueType == sqtDurable)
-	boolAutoDelete := (queueType == sqtTransient)
-	boolExclusive := (queueType == sqtTransient)
-	newQueue, err := newChannel.QueueDeclare("name", boolDurable, boolAutoDelete, boolExclusive, false, nil)
+	boolDurable := (queueType == SqtDurable)
+	boolAutoDelete := (queueType == SqtTransient)
+	boolExclusive := (queueType == SqtTransient)
+	newQueue, err := newChannel.QueueDeclare(queueName, boolDurable, boolAutoDelete, boolExclusive, false, nil)
 	if err != nil {
-		log.Fatal("Unable to create new queue")
+		return nil, amqp.Queue{}, err
 	}
 
 	// Bind the queue to the exchange
 	err = newChannel.QueueBind(queueName, key, exchange, false, nil)
 	if err != nil {
-		log.Fatal("Unable to create bind new queue")
+		return nil, amqp.Queue{}, err
 	}
 
 	return newChannel, newQueue, nil
