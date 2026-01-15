@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -30,29 +29,80 @@ func main() {
 		log.Fatal("Unable to create new channel")
 	}
 
+	// Print the server commands to the console
+	gamelogic.PrintServerHelp()
+
+	// Wait for user input
+	//mainLoop:
+	for {
+		userInput := gamelogic.GetInput()
+
+		switch userInput[0] {
+		case "pause":
+			helperServerPause(newChannel, true)
+
+		case "resume":
+			helperServerPause(newChannel, false)
+
+		case "quit":
+			fmt.Println("Shutting down at user request.")
+			//break mainLoop
+			return
+
+		default:
+			log.Printf("Unrecognised command: %s\n", userInput[0])
+		}
+	}
+
+	// It appears the tasks beyond this point are no longer intended to be used, but the lesson did not stipulate as such
+	/*
+		// Publish a message to the exchange
+		err = pubsub.PublishJSON(
+			newChannel,
+			routing.ExchangePerilDirect,
+			routing.PauseKey,
+			routing.PlayingState{
+				IsPaused: true,
+			},
+		)
+		if err != nil {
+			log.Printf("could not publish time: %v", err)
+		}
+
+		fmt.Println("Pause message sent!")
+
+		// wait for ctrl+c
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, os.Interrupt)
+		fmt.Println("Waiting for input...")
+		s := <-signalChan
+
+		// Block until a signal is received then close the channel and exit
+		close(signalChan)
+		fmt.Printf("Input received: %s. Shutting down\n", s)
+	*/
+
+}
+
+func helperServerPause(channel *amqp.Channel, pause bool) error {
 	// Publish a message to the exchange
-	err = pubsub.PublishJSON(
-		newChannel,
+	err := pubsub.PublishJSON(
+		channel,
 		routing.ExchangePerilDirect,
 		routing.PauseKey,
 		routing.PlayingState{
-			IsPaused: true,
+			IsPaused: pause,
 		},
 	)
 	if err != nil {
-		log.Printf("could not publish time: %v", err)
+		return err
 	}
 
-	fmt.Println("Pause message sent!")
+	if pause {
+		fmt.Println("Pause message sent!")
+	} else {
+		fmt.Println("Resume message sent!")
+	}
 
-	// wait for ctrl+c
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-	fmt.Println("Waiting for input...")
-	s := <-signalChan
-
-	// Block until a signal is received then close the channel and exit
-	close(signalChan)
-	fmt.Printf("Input received: %s. Shutting down\n", s)
-
+	return nil
 }
