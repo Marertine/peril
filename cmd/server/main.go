@@ -32,7 +32,19 @@ func main() {
 	}
 
 	// Publish a message to the exchange
-	err = pubsub.PublishJSON(newChannel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
+	err = pubsub.PublishJSON(
+		newChannel,
+		routing.ExchangePerilDirect,
+		routing.PauseKey,
+		routing.PlayingState{
+			IsPaused: true,
+		},
+	)
+	if err != nil {
+		log.Printf("could not publish time: %v", err)
+	}
+
+	fmt.Println("Pause message sent!")
 
 	// wait for ctrl+c
 	signalChan := make(chan os.Signal, 1)
