@@ -38,7 +38,6 @@ func main() {
 	// wait for ctrl+c
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
-	//fmt.Println("Waiting for input...")
 	_ = <-signalChan
 
 }
