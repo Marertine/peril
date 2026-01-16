@@ -23,11 +23,19 @@ func main() {
 
 	fmt.Println("Peril game server connected to RabbitMQ")
 
-	// Create a new channel
-	newChannel, err := conn.Channel()
+	// Create a messages channel
+	msgChannel, err := conn.Channel()
 	if err != nil {
-		log.Fatal("Unable to create new channel")
+		log.Fatal("Unable to create messages queue")
 	}
+
+	// Create a logs queue
+	_, _, err = pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routing.GameLogSlug+".*", pubsub.SqtDurable)
+	if err != nil {
+		log.Fatalf("Unable to declare and bind: %v", err)
+	}
+
+	fmt.Println("Logs queue created.")
 
 	// Print the server commands to the console
 	gamelogic.PrintServerHelp()
@@ -41,32 +49,19 @@ func main() {
 			gamelogic.PrintServerHelp()
 
 		case "pause":
-			helperServerPause(newChannel, true)
+			helperServerPause(msgChannel, true)
 
 		case "quit":
 			fmt.Println("Shutting down at user request.")
 			return
 
 		case "resume":
-			helperServerPause(newChannel, false)
+			helperServerPause(msgChannel, false)
 
 		default:
 			log.Printf("Unrecognised command: %s\n", userInput[0])
 		}
 	}
-
-	// It appears the tasks beyond this point are no longer intended to be used, but the lesson did not stipulate as such
-	/*
-		// wait for ctrl+c
-		signalChan := make(chan os.Signal, 1)
-		signal.Notify(signalChan, os.Interrupt)
-		fmt.Println("Waiting for input...")
-		s := <-signalChan
-
-		// Block until a signal is received then close the channel and exit
-		close(signalChan)
-		fmt.Printf("Input received: %s. Shutting down\n", s)
-	*/
 
 }
 
