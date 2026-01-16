@@ -34,7 +34,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to declare and bind: %v", err)
 	}
-
 	fmt.Println("Logs queue created.")
 
 	// Print the server commands to the console

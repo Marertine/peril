@@ -28,12 +28,22 @@ func main() {
 	}
 
 	queueName := fmt.Sprintf("%s.%s", routing.PauseKey, strUser)
-	_, _, err = pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.SqtTransient)
+	/*_, _, err = pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.SqtTransient)
 	if err != nil {
 		log.Fatalf("Unable to declare and bind: %v", err)
-	}
+	}*/
 
 	myGameState := gamelogic.NewGameState(strUser)
+	pauseHandler := handlerPause(myGameState)
+
+	err = pubsub.SubscribeJSON(
+		conn,
+		routing.ExchangePerilDirect,
+		queueName,
+		routing.PauseKey,
+		pubsub.SqtTransient,
+		pauseHandler, // this is func(routing.PlayingState)
+	)
 
 	// Wait for user input
 	for {
