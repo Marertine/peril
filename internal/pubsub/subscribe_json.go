@@ -42,14 +42,8 @@ func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string
 				continue
 			}
 
-			handler(v)
-			err = msg.Ack(false)
-			if err != nil {
-				log.Printf("Unable to acknowledge messageID: %s: %v", msg.MessageId, err)
-				continue
-			}
-
-			switch handler(v) {
+			ackType := handler(v)
+			switch ackType {
 			case Ack:
 				msg.Ack(false)
 				fmt.Println("Ack")

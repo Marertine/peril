@@ -40,7 +40,10 @@ func DeclareAndBind(
 	boolDurable := (queueType == SqtDurable)
 	boolAutoDelete := (queueType == SqtTransient)
 	boolExclusive := (queueType == SqtTransient)
-	newQueue, err := newChannel.QueueDeclare(queueName, boolDurable, boolAutoDelete, boolExclusive, false, nil)
+
+	tableDeadLetter := amqp.Table{"x-dead-letter-exchange": "peril_dlx"}
+
+	newQueue, err := newChannel.QueueDeclare(queueName, boolDurable, boolAutoDelete, boolExclusive, false, tableDeadLetter)
 	if err != nil {
 		return nil, amqp.Queue{}, err
 	}
