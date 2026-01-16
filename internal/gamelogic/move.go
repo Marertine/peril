@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type MoveOutcome int
@@ -14,7 +16,7 @@ const (
 	MoveOutcomeMakeWar
 )
 
-func (gs *GameState) HandleMove(move ArmyMove) MoveOutcome {
+func (gs *GameState) HandleMove(move ArmyMove, channel *amqp.Channel) MoveOutcome {
 	defer fmt.Println("------------------------")
 	player := gs.GetPlayerSnap()
 

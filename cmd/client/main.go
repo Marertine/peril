@@ -27,11 +27,13 @@ func main() {
 		log.Fatalf("No valid user provided: %v", err)
 	}
 
-	//queueName := fmt.Sprintf("%s.%s", routing.PauseKey, strUser)
-
+	myChannel, err := conn.Channel()
+	if err != nil {
+		fmt.Println(err)
+	}
 	myGameState := gamelogic.NewGameState(strUser)
 	pauseHandler := handlerPause(myGameState)
-	moveHandler := handlerMove(myGameState)
+	moveHandler := handlerMove(myGameState, myChannel)
 
 	// Subscribe to users own message queue
 	err = pubsub.SubscribeJSON(
@@ -57,11 +59,6 @@ func main() {
 	)
 	if err != nil {
 		log.Fatalf("Unable to subscribe to queue: %s, error: %v", routing.ArmyMovesPrefix+".*", err)
-	}
-
-	myChannel, err := conn.Channel()
-	if err != nil {
-		fmt.Println(err)
 	}
 
 	// Wait for user input
