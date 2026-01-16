@@ -30,10 +30,12 @@ func handlerMove(gs *gamelogic.GameState, channel *amqp.Channel) func(gamelogic.
 			err := pubsub.PublishJSON(channel, routing.ExchangePerilTopic, key, publishData)
 			if err != nil {
 				fmt.Println(err)
+				return pubsub.NackRequeue
 			} else {
 				fmt.Println("Move published successfully!")
+				return pubsub.Ack
 			}
-			return pubsub.NackRequeue
+
 		}
 		fmt.Println("error: unknown move outcome")
 		return pubsub.NackDiscard
