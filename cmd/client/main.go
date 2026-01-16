@@ -44,7 +44,7 @@ func main() {
 			gamelogic.PrintClientHelp()
 
 		case "move":
-			err := myGameState.CommandSpawn(userInput)
+			_, err := myGameState.CommandMove(userInput)
 			if err != nil {
 				fmt.Println(err)
 			}
