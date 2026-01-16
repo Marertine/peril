@@ -12,7 +12,8 @@ import (
 func handlerMove(gs *gamelogic.GameState, channel *amqp.Channel) func(gamelogic.ArmyMove) pubsub.Acktype {
 	return func(move gamelogic.ArmyMove) pubsub.Acktype {
 		defer fmt.Print("> ")
-		moveOutcome := gs.HandleMove(move)
+		moveOutcome := gs.HandleMove(move, channel)
+
 		switch moveOutcome {
 		case gamelogic.MoveOutcomeSamePlayer:
 			return pubsub.NackDiscard
@@ -36,5 +37,35 @@ func handlerMove(gs *gamelogic.GameState, channel *amqp.Channel) func(gamelogic.
 		}
 		fmt.Println("error: unknown move outcome")
 		return pubsub.NackDiscard
+	}
+}
+
+func handlerWar(gs *gamelogic.GameState, channel *amqp.Channel) func(gamelogic.RecognitionOfWar) pubsub.Acktype {
+	return func(recognition gamelogic.RecognitionOfWar) pubsub.Acktype {
+		defer fmt.Print("> ")
+		//Call the gamestate's HandleWar method with the message's body (recognition).
+		outcome, _, _ := gs.HandleWar(recognition)
+
+		switch outcome {
+		case gamelogic.WarOutcomeNotInvolved:
+			return pubsub.NackRequeue
+
+		case gamelogic.WarOutcomeNoUnits:
+			return pubsub.NackDiscard
+
+		case gamelogic.WarOutcomeOpponentWon:
+			return pubsub.Ack
+
+		case gamelogic.WarOutcomeYouWon:
+			return pubsub.Ack
+
+		case gamelogic.WarOutcomeDraw:
+			return pubsub.Ack
+
+		default:
+			fmt.Println("Unrecognised war outcome!")
+			return pubsub.NackDiscard
+		}
+
 	}
 }

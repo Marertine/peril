@@ -34,6 +34,7 @@ func main() {
 	myGameState := gamelogic.NewGameState(strUser)
 	pauseHandler := handlerPause(myGameState)
 	moveHandler := handlerMove(myGameState, myChannel)
+	warHandler := handlerWar(myGameState, myChannel)
 
 	// Subscribe to users own message queue
 	err = pubsub.SubscribeJSON(
@@ -59,6 +60,19 @@ func main() {
 	)
 	if err != nil {
 		log.Fatalf("Unable to subscribe to queue: %s, error: %v", routing.ArmyMovesPrefix+".*", err)
+	}
+
+	// Subscribe to the message queue that reports wars from all players
+	err = pubsub.SubscribeJSON(
+		conn,                               // Connection
+		routing.ExchangePerilTopic,         // Exchange
+		"war",                              // QueueName
+		routing.WarRecognitionsPrefix+".*", // Key
+		pubsub.SqtDurable,                  // QueueType
+		warHandler,                         // Handler:  func(gamelogic.HandleMove)
+	)
+	if err != nil {
+		log.Fatalf("Unable to subscribe to queue: %s, error: %v", "war", err)
 	}
 
 	// Wait for user input
@@ -102,11 +116,4 @@ func main() {
 			log.Printf("Unrecognised command: %s\n", userInput[0])
 		}
 	}
-
-	/*
-		// wait for ctrl+c
-		signalChan := make(chan os.Signal, 1)
-		signal.Notify(signalChan, os.Interrupt)
-		_ = <-signalChan
-	*/
 }
