@@ -27,23 +27,42 @@ func main() {
 		log.Fatalf("No valid user provided: %v", err)
 	}
 
-	queueName := fmt.Sprintf("%s.%s", routing.PauseKey, strUser)
-	/*_, _, err = pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.SqtTransient)
-	if err != nil {
-		log.Fatalf("Unable to declare and bind: %v", err)
-	}*/
+	//queueName := fmt.Sprintf("%s.%s", routing.PauseKey, strUser)
 
 	myGameState := gamelogic.NewGameState(strUser)
 	pauseHandler := handlerPause(myGameState)
+	moveHandler := handlerMove(myGameState)
 
+	// Subscribe to users own message queue
 	err = pubsub.SubscribeJSON(
-		conn,
-		routing.ExchangePerilDirect,
-		queueName,
-		routing.PauseKey,
-		pubsub.SqtTransient,
-		pauseHandler, // this is func(routing.PlayingState)
+		conn,                         // Connection
+		routing.ExchangePerilDirect,  // Exchange
+		routing.PauseKey+"."+strUser, // QueueName
+		routing.PauseKey,             // Key
+		pubsub.SqtTransient,          // QueueType
+		pauseHandler,                 // Handler: func(routing.PlayingState)
 	)
+	if err != nil {
+		log.Fatalf("Unable to subscribe to queue: %s, error: %v", routing.PauseKey+"."+strUser, err)
+	}
+
+	// Subscribe to the message queue that reports moves from all players
+	err = pubsub.SubscribeJSON(
+		conn,                                // Connection
+		routing.ExchangePerilTopic,          // Exchange
+		routing.ArmyMovesPrefix+"."+strUser, // QueueName
+		routing.ArmyMovesPrefix+".*",        // Key
+		pubsub.SqtTransient,                 // QueueType
+		moveHandler,                         // Handler:  func(gamelogic.HandleMove)
+	)
+	if err != nil {
+		log.Fatalf("Unable to subscribe to queue: %s, error: %v", routing.ArmyMovesPrefix+".*", err)
+	}
+
+	myChannel, err := conn.Channel()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	// Wait for user input
 	for {
@@ -54,9 +73,16 @@ func main() {
 			gamelogic.PrintClientHelp()
 
 		case "move":
-			_, err := myGameState.CommandMove(userInput)
+			myArmyMove, err := myGameState.CommandMove(userInput)
 			if err != nil {
 				fmt.Println(err)
+			}
+
+			err = pubsub.PublishJSON(myChannel, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+strUser, myArmyMove)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println("Move published successfully!")
 			}
 
 		case "quit":
