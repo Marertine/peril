@@ -33,21 +33,22 @@ func main() {
 	gamelogic.PrintServerHelp()
 
 	// Wait for user input
-	//mainLoop:
 	for {
 		userInput := gamelogic.GetInput()
 
 		switch userInput[0] {
+		case "help":
+			gamelogic.PrintServerHelp()
+
 		case "pause":
 			helperServerPause(newChannel, true)
 
-		case "resume":
-			helperServerPause(newChannel, false)
-
 		case "quit":
 			fmt.Println("Shutting down at user request.")
-			//break mainLoop
 			return
+
+		case "resume":
+			helperServerPause(newChannel, false)
 
 		default:
 			log.Printf("Unrecognised command: %s\n", userInput[0])
@@ -56,21 +57,6 @@ func main() {
 
 	// It appears the tasks beyond this point are no longer intended to be used, but the lesson did not stipulate as such
 	/*
-		// Publish a message to the exchange
-		err = pubsub.PublishJSON(
-			newChannel,
-			routing.ExchangePerilDirect,
-			routing.PauseKey,
-			routing.PlayingState{
-				IsPaused: true,
-			},
-		)
-		if err != nil {
-			log.Printf("could not publish time: %v", err)
-		}
-
-		fmt.Println("Pause message sent!")
-
 		// wait for ctrl+c
 		signalChan := make(chan os.Signal, 1)
 		signal.Notify(signalChan, os.Interrupt)

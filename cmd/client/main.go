@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
@@ -35,9 +33,47 @@ func main() {
 		log.Fatalf("Unable to declare and bind: %v", err)
 	}
 
-	// wait for ctrl+c
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-	_ = <-signalChan
+	myGameState := gamelogic.NewGameState(strUser)
 
+	// Wait for user input
+	for {
+		userInput := gamelogic.GetInput()
+
+		switch userInput[0] {
+		case "help":
+			gamelogic.PrintClientHelp()
+
+		case "move":
+			err := myGameState.CommandSpawn(userInput)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+		case "quit":
+			gamelogic.PrintQuit()
+			return
+
+		case "spam":
+			log.Println("Spamming not allowed yet!")
+
+		case "spawn":
+			err := myGameState.CommandSpawn(userInput)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+		case "status":
+			myGameState.CommandStatus()
+
+		default:
+			log.Printf("Unrecognised command: %s\n", userInput[0])
+		}
+	}
+
+	/*
+		// wait for ctrl+c
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, os.Interrupt)
+		_ = <-signalChan
+	*/
 }
