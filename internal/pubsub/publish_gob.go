@@ -30,19 +30,3 @@ func PublishGob[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	)
 	return err
 }
-
-/*
-func decode(data []byte) (GameLog, error) {
-	network := bytes.NewBuffer(data)
-	dec := gob.NewDecoder(network)
-
-	var gl GameLog
-
-	err := dec.Decode(&gl)
-	if err != nil {
-		return GameLog{}, err
-	}
-	return gl, nil
-}
-
-*/

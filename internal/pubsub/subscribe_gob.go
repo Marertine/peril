@@ -1,18 +1,15 @@
 package pubsub
 
 import (
-	//"context"
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"log"
-
-	//"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
-	//"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string, queueType SimpleQueueType, handler func(T) Acktype) error {
+func SubscribeGob[T any](conn *amqp.Connection, exchange, queueName, key string, queueType SimpleQueueType, handler func(T) Acktype) error {
 	// Ensure that the queue exists and is bound to the exchange
 	chanDelivery, queueDelivery, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
 	if err != nil {
@@ -27,10 +24,13 @@ func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string
 	go func() {
 		defer chanDelivery.Close()
 		for msg := range msgs {
+			network := bytes.NewBuffer(msg.Body)
+			dec := gob.NewDecoder(network)
 			var v T
-			err := json.Unmarshal(msg.Body, &v)
+
+			err := dec.Decode(&v)
 			if err != nil {
-				log.Printf("failed to unmarshal message %s: %v", msg.MessageId, err)
+				log.Printf("failed to decode message %s: %v", msg.MessageId, err)
 				continue
 			}
 

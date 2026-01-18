@@ -30,9 +30,10 @@ func main() {
 	}
 
 	// Create a logs queue
-	_, _, err = pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routing.GameLogSlug+".*", pubsub.SqtDurable)
+	//_, _, err = pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routing.GameLogSlug+".*", pubsub.SqtDurable)
+	err = subscribeToLogs(conn)
 	if err != nil {
-		log.Fatalf("Unable to declare and bind: %v", err)
+		log.Fatalf("Unable to subscribe to logs queue: %v", err)
 	}
 	fmt.Println("Logs queue created.")
 
@@ -85,4 +86,25 @@ func helperServerPause(channel *amqp.Channel, pause bool) error {
 	}
 
 	return nil
+}
+
+func subscribeToLogs(conn *amqp.Connection) error {
+	return pubsub.SubscribeGob(
+		conn,
+		routing.ExchangePerilTopic,
+		routing.GameLogSlug,
+		routing.GameLogSlug+".*",
+		pubsub.SqtDurable,
+		handlerLogs,
+	)
+}
+
+func handlerLogs(gl routing.GameLog) pubsub.Acktype {
+	defer fmt.Print("> ")
+	err := gamelogic.WriteLog(gl)
+	if err != nil {
+		return pubsub.NackDiscard
+	}
+	return pubsub.Ack
+
 }
