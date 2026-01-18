@@ -43,6 +43,10 @@ func main() {
 	// Wait for user input
 	for {
 		userInput := gamelogic.GetInput()
+		if len(userInput) == 0 {
+			log.Println("empty input")
+			continue
+		}
 
 		switch userInput[0] {
 		case "help":

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
@@ -101,7 +102,22 @@ func main() {
 			return
 
 		case "spam":
-			log.Println("Spamming not allowed yet!")
+			if len(userInput) != 2 {
+				log.Println("Spam command requires a number")
+				return
+			}
+			loopCount, err := strconv.Atoi(userInput[1])
+			if err != nil {
+				log.Println("Spam command requires a number")
+				return
+			}
+			for i := 0; i < loopCount; i++ {
+				err := pubsub.PublishGameLog(myChannel, gamelogic.GetMaliciousLog(), strUser)
+				if err != nil {
+					log.Println("Unable to publish game log")
+					return
+				}
+			}
 
 		case "spawn":
 			err := myGameState.CommandSpawn(userInput)

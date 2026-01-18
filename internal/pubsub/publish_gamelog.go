@@ -1,9 +1,6 @@
 package pubsub
 
 import (
-	//"bytes"
-	//"context"
-	//"encoding/gob"
 	"time"
 
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
