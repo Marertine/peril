@@ -21,4 +21,4 @@ Each player needs to spawn at least one army.
 Move the armies until they are in same territory and fight.
 
 <h2>Contributing</h2>
-Do the lessons yourself, railing at the bits that could have been explained better.
+##Do the lessons yourself, railing at the bits that could have been explained better.
